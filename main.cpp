@@ -5,10 +5,12 @@
 #define pi 3.141592654
 
 float dt = 0;
-float Roll, Pitch, Yaw = 0;
+float ARoll, APitch, AYaw = 0;//가속도 센서 롤, 피치, 요
+float GRoll, GPitch, GYaw = 0;//자이로 센서 롤, 피치, 요
 float gyroX, gyroY, gyroZ = 0;
 float accelX, accelY, accelZ = 0;
 float lgyroX, lgyroY, lgyroZ = 0;
+float FPitch = 0;//필터 적용된 피치값
 
 
 MPU6050 mpu6050;
@@ -16,7 +18,6 @@ Timer t;
 Serial pc(USBTX, USBRX, 9600); // tx, rx
 
 int main(){
-
     //Set up I2C
     i2c.frequency(400000);  // use fast (400 kHz) I2C
     t.start();
@@ -56,8 +57,8 @@ int main(){
             mpu6050.getGres();
             mpu6050.getAres();
 
-            gyroX = (float)gyroCount[0]*gRes;
-            gyroY = (float)gyroCount[1]*gRes;
+            gyroY = (float)gyroCount[0]*gRes;
+            gyroX = (float)gyroCount[1]*gRes;
             gyroZ = (float)gyroCount[2]*gRes; // - gyroBias[2];
             
             accelX = (float)accelCount[0]*aRes;
@@ -69,19 +70,19 @@ int main(){
         dt = (float)((Now - lastUpdate)/1000000.0f) ; // set integration time by time elapsed since last filter update
         lastUpdate = Now;
 
-        Roll = (180/pi)*(atan(accelX/(sqrt((accelY*accelY)+(accelZ*accelZ))))) - 4.36;
-        Pitch = (180/pi)*(atan(accelY/(sqrt((accelX*accelX)+(accelZ*accelZ))))) - 0.063;
-        Yaw = (180/pi)*(atan((sqrt((accelX*accelX)+(accelY*accelY)))/accelZ)) - 3.93;
+        ARoll = (180/pi)*(atan(accelX/(sqrt((accelY*accelY)+(accelZ*accelZ))))) - 4.36;
+        APitch = (180/pi)*(atan(accelY/(sqrt((accelX*accelX)+(accelZ*accelZ))))) - 0.063;
+        AYaw = (180/pi)*(atan((sqrt((accelX*accelX)+(accelY*accelY)))/accelZ)) - 3.93;
 
-        gyroX = gyroX / 131.0;
-        gyroY = gyroY / 131.0;
-        gyroZ = gyroZ / 131.0;
+        gyroX = gyroX;
+        gyroY = gyroY;
+        gyroZ = gyroZ;
         
-        //Yaw += ((lgyroZ+gyroZ)/2)*dt;
-        //Pitch += ((lgyroY+gyroY)/2)*dt;
-        //lgyroZ = gyroZ;
-        //lgyroY = gyroY;  
-        //pc.printf("Yaw: %f\n\r", Yaw);
-        pc.printf("Pitch : %f\n\r", Pitch);
+        GYaw += ((lgyroZ+gyroZ)/2)*dt;
+        GPitch += ((lgyroY+gyroY)/2)*dt;
+        FPitch = (0.95*(FPitch+(((lgyroY+gyroY)/2)*dt)))+0.05*APitch;//complementary fillter
+        lgyroZ = gyroZ;
+        lgyroY = gyroY;
+        pc.printf("%f,%f,%f\n",FPitch, APitch, GPitch);
     }
 }
