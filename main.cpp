@@ -49,7 +49,7 @@ int main(){
     }
 
     while(1) {
-
+        Now = t.read_us();
         // If data ready bit set, all data registers have new data
         if(mpu6050.readByte(MPU6050_ADDRESS, INT_STATUS) & 0x01) {  // check if data ready interrupt
             mpu6050.readGyroData(gyroCount);  // Read the x/y/z adc values
@@ -66,23 +66,18 @@ int main(){
             accelZ = (float)accelCount[2]*aRes;
         }
 
-        Now = t.read_us();
-        dt = (float)((Now - lastUpdate)/1000000.0f) ; // set integration time by time elapsed since last filter update
-        lastUpdate = Now;
-
         ARoll = (180/pi)*(atan(accelX/(sqrt((accelY*accelY)+(accelZ*accelZ))))) - 4.36;
         APitch = (180/pi)*(atan(accelY/(sqrt((accelX*accelX)+(accelZ*accelZ))))) - 0.063;
         AYaw = (180/pi)*(atan((sqrt((accelX*accelX)+(accelY*accelY)))/accelZ)) - 3.93;
 
-        gyroX = gyroX;
-        gyroY = gyroY;
-        gyroZ = gyroZ;
-        
-        GYaw += ((lgyroZ+gyroZ)/2)*dt;
-        GPitch += ((lgyroY+gyroY)/2)*dt;
-        FPitch = (0.95*(FPitch+(((lgyroY+gyroY)/2)*dt)))+0.05*APitch;//complementary fillter
+        GYaw += ((lgyroZ+gyroZ)/2)*0.02*2;
+        GPitch += ((lgyroY+gyroY)/2)*0.02*2;
+        FPitch = (0.98*(FPitch+(((lgyroY+gyroY)/2)*2*0.02)))+0.02*APitch;//complementary fillter
         lgyroZ = gyroZ;
         lgyroY = gyroY;
         pc.printf("%f,%f,%f\n",FPitch, APitch, GPitch);
+
+        dt = (float)((t.read_us() - Now)/1000000.0f); // set integration time by time elapsed since last filter update
+        wait(0.02-dt);
     }
 }
