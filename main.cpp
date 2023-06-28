@@ -70,14 +70,14 @@ int main(){
         APitch = (180/pi)*(atan(accelY/(sqrt((accelX*accelX)+(accelZ*accelZ))))) - 0.063;
         AYaw = (180/pi)*(atan((sqrt((accelX*accelX)+(accelY*accelY)))/accelZ)) - 3.93;
 
-        GYaw += ((lgyroZ+gyroZ)/2)*0.02*2;
-        GPitch += ((lgyroY+gyroY)/2)*0.02*2;
-        FPitch = (0.98*(FPitch+(((lgyroY+gyroY)/2)*2*0.02)))+0.02*APitch;//complementary fillter
+        GYaw += ((lgyroZ+gyroZ)/2)*0.01*2;
+        GPitch += ((lgyroY+gyroY)/2)*0.01*2;
+        FPitch = (0.9*(FPitch+(((lgyroY+gyroY)/2)*2*0.01)))+0.1*APitch;//complementary fillter
         lgyroZ = gyroZ;
         lgyroY = gyroY;
-        pc.printf("%f,%f,%f\n",FPitch, APitch, GPitch);
+        pc.printf("%f,%f,%f\n",FPitch, GPitch, APitch);
 
         dt = (float)((t.read_us() - Now)/1000000.0f); // set integration time by time elapsed since last filter update
-        wait(0.02-dt);
+        wait(0.01-dt);
     }
 }
